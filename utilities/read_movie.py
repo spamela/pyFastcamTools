@@ -6,7 +6,7 @@ import sys
 from datetime import datetime
 import cv2
 import numpy as np
-from frame_history import frame_history
+from pyFastcamTools.utilities.frame_history import frame_history
 from pyFastcamTools.operation.movie_reader import ipx_reader,mraw_reader,imstack_reader
 import logging
 from subprocess import call,Popen,PIPE
