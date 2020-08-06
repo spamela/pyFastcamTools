@@ -3,14 +3,29 @@ from __future__ import print_function
 import os.path
 from os import path
 import sys
+from datetime import datetime
 import cv2
 import numpy as np
 from frame_history import frame_history
 from pyFastcamTools.operation.movie_reader import ipx_reader,mraw_reader,imstack_reader
 import logging
+from subprocess import call,Popen,PIPE
 
-def read_movie(filename,Nframes=None,stride=1,startpos=0,endpos=-1,verbose=0,startframe=None,endframe=None,starttime=None,endtime=100.0,
-              transforms=[],trigger_time = -0.1):
+
+def read_movie(filename,
+               Nframes=None,
+               stride=1,
+               startpos=0,
+               endpos=-1,
+               verbose=0,
+               startframe=None,
+               endframe=None,
+               starttime=None,
+               endtime=100.0,
+               transforms=[],
+               trigger_time = -0.1,
+               save_frames=False,
+               frames_directory=None):
 
     """
     Function to read in a movie file using openCV and store as a frameHistory
@@ -48,7 +63,16 @@ def read_movie(filename,Nframes=None,stride=1,startpos=0,endpos=-1,verbose=0,sta
 
     # read frames
     frames = frame_history(descriptor="File: "+filename)
-    
+
+    # Frames output
+    if (save_frames):
+        if (frames_directory==None):
+            now = datetime.now()
+            date_and_time = now.strftime("%Y.%m.%d_%H.%M.%S")
+            frames_directory = 'frames_output_'+date_and_time
+        call('mkdir -p '+frames_directory, shell=True)
+        print('Frames will be saved to directory "./'+frames_directory+'/"')
+
     # deal with ipx, mraw or unspecified formats
     if '.' not in filename or filename.split('.')[-1] == 'ipx' or filename.split('.')[-1] == 'mraw':
         # get start/end frames
@@ -91,10 +115,16 @@ def read_movie(filename,Nframes=None,stride=1,startpos=0,endpos=-1,verbose=0,sta
         for i in np.arange(Nframes*stride):
             print( 'Reading frame {} out of {}\r'.format(i, len(np.arange(Nframes*stride))), end="")
             ret,frame,header = vid.read(transforms=transforms)
+            # scaling for pixel bit size
+            frame_tmp = frame[::-1].T
+            frame_scale = 255. / frame_tmp.max()
+            frame = np.array(frame_scale * frame_tmp, dtype=np.uint8)
             if ret and (not N + startframe > endframe)  and (not float(header['time_stamp']) > endtime):
                 if i % stride == 0:
                     if (verbose > 0): print("Reading movie frame {} at time {}".format(header['frame_number'],header['time_stamp']))
                     frames.add_frame(frame,header['time_stamp'],header['frame_number'])
+                    if (save_frames):
+                        cv2.imwrite(frames_directory+"/frame%d.jpg" % N, frame)
                     N += 1
             else:
                 break
