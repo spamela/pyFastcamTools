@@ -92,7 +92,6 @@ class imstack_reader(movie_reader):
         #Read and store the file header 
         if cih_file is not None:
             for line in cih_file:
-                #print line
                 if line[0] == '#':
                     pass
                 else:
@@ -357,14 +356,13 @@ class mraw_reader(movie_reader):
         
         #Read and store the file header 
         for line in cih_file:
-            #print line
             if line[0] == '#':
                 pass
             else:
                 line_split = line.decode().split(':')
                 if len(line_split)>1:
                     self.file_header[line_split[0].replace(' ','')] = line_split[1] 
-                    print('new param:',line_split[0].replace(' ',''))
+                    #print('new param:',line_split[0].replace(' ',''))
                 else:
                     pass
         #Size of image frame in bytes (no of pixels times size of unsigned int)  
