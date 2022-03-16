@@ -1,0 +1,40 @@
+#!/bin/bash --login
+
+# --- PBS job options (name, compute nodes, job time)
+#PBS -N JOREK
+
+# --- select_max=167 
+#PBS -l select=1:ncpus=1:mpiprocs=48
+
+# --- Walltime max 24h
+# #PBS -l walltime=12:59:00
+#PBS -l walltime=00:59:00
+
+# --- Replace [budget code] below with your project code (e.g. t01)
+#PBS -A FUA36_UKAEA_ML
+
+# --- Queue
+#SBATCH --partition=skl_fua_dbg
+# #SBATCH --partition=skl_fua_prod
+# #SBATCH --qos=skl_qos_fuabprod
+
+### Set environment
+module purge
+module load python/3.9.4
+source /marconi_work/FUA36_UKAEA_ML/spamela/MAST_fast_camera/all_SA1/venv/bin/activate
+#export OMP_NUM_THREADS=48
+#export I_MPI_PIN_MODE=lib
+#export OMP_STACKSIZE=512m
+
+# Launch the parallel job
+for i in ./data_raw/* 
+do
+  my_array=($(echo $i | tr "/" "\n"))
+  pulse="${my_array[2]}"
+  if [ "$pulse" -ge "29951" ] 
+  then
+    echo $pulse 
+    ./extract_data.py 48 $i > nohup_file
+  fi
+done
+#./mraw_extraction.py 30008 /marconi_work/FUA36_UKAEA_ML/spamela/MAST_fast_camera/all_SA1/data_raw/ C001H001S0001 C001H001S0001-00.mraw 1 48 > nohup_file
